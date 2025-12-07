@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: cerebro-backend
+    environment:
+      - POSTGRES_HOST=172.21.0.2
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=azeroth
+      - POSTGRES_PASSWORD=azeroth
+      - POSTGRES_DB=azeroth_vectors
+      - REDIS_HOST=172.21.0.11
+      - REDIS_PORT=6379
+      - VLLM_URL=http://172.21.0.3:8000
+      - AC_BIN_PATH=/mnt/nextorage/appdata/wotlk/server/bin
+      - AC_ETC_PATH=/mnt/nextorage/appdata/wotlk/server/etc
+    ports:
+      - "8080:8080"
+    volumes:
+      - /mnt/nextorage/appdata/wotlk/server/etc:/mnt/nextorage/appdata/wotlk/server/etc:rw
+    networks:
+      - azerothcore
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: cerebro-frontend
+    environment:
+      - ORIGIN=http://localhost:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - azerothcore
+    restart: unless-stopped
+
+networks:
+  azerothcore:
+    external: true
