@@ -15,10 +15,20 @@ services:
       - VLLM_URL=http://172.21.0.3:8000
       - AC_BIN_PATH=/mnt/nextorage/appdata/wotlk/server/bin
       - AC_ETC_PATH=/mnt/nextorage/appdata/wotlk/server/etc
+      # AzerothCore server connection
+      - AC_SERVER_HOST=172.21.0.4
+      - AC_WORLD_PORT=8085
+      - AC_AUTH_PORT=3724
+      - AC_SOAP_HOST=172.21.0.4
+      - AC_SOAP_PORT=7878
+      - AC_SOAP_USER=scaldor
+      - AC_SOAP_PASS=321$
+      - AC_DOCKER_CONTAINER=azerothcore-server
     ports:
       - "8086:8080"
     volumes:
       - /mnt/nextorage/appdata/wotlk/server/etc:/mnt/nextorage/appdata/wotlk/server/etc:rw
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - azerothcore
     restart: unless-stopped

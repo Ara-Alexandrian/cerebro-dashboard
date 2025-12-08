@@ -39,17 +39,90 @@ export async function getVllmStatus() {
 	return request<{ health: { status: string }; models: Array<{ id: string }> }>('/monitor/vllm');
 }
 
-// Server
+// Server Status & Control
 export async function getServerStatus() {
-	return request<{ worldserver: string; authserver: string }>('/server/status');
+	return request<{
+		worldserver: string;
+		authserver: string;
+		soap: string;
+		host: string;
+	}>('/server/status');
 }
 
+export async function restartServer() {
+	return request<{ success: boolean; message?: string; error?: string }>('/server/restart', {
+		method: 'POST'
+	});
+}
+
+export async function stopServer() {
+	return request<{ success: boolean; message?: string; error?: string }>('/server/stop', {
+		method: 'POST'
+	});
+}
+
+export async function startServer() {
+	return request<{ success: boolean; message?: string; error?: string }>('/server/start', {
+		method: 'POST'
+	});
+}
+
+export async function getServerLogs(lines: number = 100) {
+	return request<{ success: boolean; logs: string; lines: number }>(`/server/logs?lines=${lines}`);
+}
+
+export async function sendServerCommand(command: string) {
+	return request<{ success: boolean; command: string; result?: string; error?: string }>('/server/command', {
+		method: 'POST',
+		body: JSON.stringify({ command })
+	});
+}
+
+// PlayerBots Control
+export async function getBotsStatus() {
+	return request<{ success: boolean; result?: string; error?: string }>('/server/bots/status');
+}
+
+export async function addBot(name?: string) {
+	const url = name ? `/server/bots/add?name=${encodeURIComponent(name)}` : '/server/bots/add';
+	return request<{ success: boolean; result?: string; error?: string }>(url, {
+		method: 'POST'
+	});
+}
+
+export async function removeAllBots() {
+	return request<{ success: boolean; result?: string; error?: string }>('/server/bots/remove-all', {
+		method: 'POST'
+	});
+}
+
+export async function setBotCount(count: number) {
+	return request<{ success: boolean; result?: string; error?: string }>('/server/bots/count', {
+		method: 'POST',
+		body: JSON.stringify({ count })
+	});
+}
+
+export async function reloadBotsConfig() {
+	return request<{ success: boolean; result?: string; error?: string }>('/server/bots/reload-config', {
+		method: 'POST'
+	});
+}
+
+// Config Files
 export async function getConfigs() {
 	return request<{ configs: Array<{ name: string; path: string; size: number }> }>('/server/configs');
 }
 
 export async function getConfig(filename: string) {
 	return request<{ filename: string; content: string }>(`/server/configs/${filename}`);
+}
+
+export async function saveConfig(filename: string, content: string) {
+	return request<{ success: boolean; filename: string }>(`/server/configs/${filename}`, {
+		method: 'PUT',
+		body: JSON.stringify({ content })
+	});
 }
 
 // Bots / Personalities
