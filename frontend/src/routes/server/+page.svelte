@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
 	import {
 		getServerStatus,
 		restartServer,
@@ -8,45 +9,42 @@
 		getServerLogs,
 		sendServerCommand,
 		getBotsStatus,
-		addBot,
-		removeAllBots,
-		setBotCount,
 		reloadBotsConfig
 	} from '$lib/api';
 
 	// Server state
-	let serverStatus = $state<{
+	let serverStatus: {
 		worldserver: string;
 		authserver: string;
 		soap: string;
 		host: string;
-	} | null>(null);
-	let serverLogs = $state('');
-	let isLoading = $state(false);
-	let statusMessage = $state('');
-	let statusType = $state<'success' | 'error' | ''>('');
+	} | null = null;
+	let serverLogs = '';
+	let isLoading = false;
+	let statusMessage = '';
+	let statusType: 'success' | 'error' | '' = '';
 
 	// Bot control state
-	let botCount = $state(10);
-	let botName = $state('');
-	let botsStatus = $state('');
+	let botsStatus = '';
 
 	// GM Command state
-	let gmCommand = $state('');
-	let commandHistory = $state<Array<{ command: string; result: string; success: boolean }>>([]);
+	let gmCommand = '';
+	let commandHistory: Array<{ command: string; result: string; success: boolean }> = [];
 
 	// Refresh interval
 	let refreshInterval: ReturnType<typeof setInterval>;
 
 	onMount(() => {
-		loadServerStatus();
-		loadServerLogs();
-		loadBotsStatus();
-
-		// Auto-refresh status every 10 seconds
-		refreshInterval = setInterval(() => {
+		if (browser) {
 			loadServerStatus();
-		}, 10000);
+			loadServerLogs();
+			loadBotsStatus();
+
+			// Auto-refresh status every 10 seconds
+			refreshInterval = setInterval(() => {
+				loadServerStatus();
+			}, 10000);
+		}
 
 		return () => {
 			if (refreshInterval) clearInterval(refreshInterval);
@@ -177,55 +175,11 @@
 		}
 	}
 
-	async function handleSetBotCount() {
-		try {
-			const result = await setBotCount(botCount);
-			if (result.success) {
-				showMessage(`Bot count set to ${botCount}`, 'success');
-			} else {
-				showMessage(result.error || 'Failed to set bot count', 'error');
-			}
-		} catch (e) {
-			showMessage('Failed to set bot count', 'error');
-		}
-		loadBotsStatus();
-	}
-
-	async function handleAddBot() {
-		try {
-			const result = await addBot(botName || undefined);
-			if (result.success) {
-				showMessage(botName ? `Added bot: ${botName}` : 'Added random bot', 'success');
-				botName = '';
-			} else {
-				showMessage(result.error || 'Failed to add bot', 'error');
-			}
-		} catch (e) {
-			showMessage('Failed to add bot', 'error');
-		}
-		loadBotsStatus();
-	}
-
-	async function handleRemoveAllBots() {
-		if (!confirm('Remove all active bots?')) return;
-		try {
-			const result = await removeAllBots();
-			if (result.success) {
-				showMessage('All bots removed', 'success');
-			} else {
-				showMessage(result.error || 'Failed to remove bots', 'error');
-			}
-		} catch (e) {
-			showMessage('Failed to remove bots', 'error');
-		}
-		loadBotsStatus();
-	}
-
 	async function handleReloadConfig() {
 		try {
 			const result = await reloadBotsConfig();
 			if (result.success) {
-				showMessage('PlayerBots config reloaded', 'success');
+				showMessage('Config reloaded', 'success');
 			} else {
 				showMessage(result.error || 'Failed to reload config', 'error');
 			}
@@ -238,6 +192,12 @@
 		if (status === 'running' || status === 'available') return 'status-ok';
 		if (status === 'stopped' || status === 'unavailable') return 'status-error';
 		return 'status-unknown';
+	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter') {
+			handleSendCommand();
+		}
 	}
 </script>
 
@@ -291,26 +251,26 @@
 			<div class="button-row">
 				<button
 					class="btn btn-success"
-					onclick={handleStart}
+					on:click={handleStart}
 					disabled={isLoading || serverStatus?.worldserver === 'running'}
 				>
 					Start
 				</button>
 				<button
 					class="btn btn-warning"
-					onclick={handleRestart}
+					on:click={handleRestart}
 					disabled={isLoading}
 				>
 					Restart
 				</button>
 				<button
 					class="btn btn-danger"
-					onclick={handleStop}
+					on:click={handleStop}
 					disabled={isLoading || serverStatus?.worldserver === 'stopped'}
 				>
 					Stop
 				</button>
-				<button class="btn btn-secondary" onclick={loadServerStatus} disabled={isLoading}>
+				<button class="btn btn-secondary" on:click={loadServerStatus} disabled={isLoading}>
 					Refresh
 				</button>
 			</div>
@@ -318,51 +278,21 @@
 
 		<!-- PlayerBots Control Card -->
 		<section class="card bots-card">
-			<h2>PlayerBots Control</h2>
+			<h2>PlayerBots Status</h2>
 
 			<div class="bots-status">
 				<pre>{botsStatus || 'No bot status available'}</pre>
 			</div>
 
-			<div class="form-group">
-				<label for="botCount">Target Bot Count</label>
-				<div class="input-row">
-					<input
-						type="number"
-						id="botCount"
-						bind:value={botCount}
-						min="0"
-						max="100"
-					/>
-					<button class="btn btn-primary" onclick={handleSetBotCount}>
-						Set Count
-					</button>
-				</div>
-			</div>
-
-			<div class="form-group">
-				<label for="botName">Add Bot</label>
-				<div class="input-row">
-					<input
-						type="text"
-						id="botName"
-						bind:value={botName}
-						placeholder="Bot name (optional)"
-					/>
-					<button class="btn btn-primary" onclick={handleAddBot}>
-						Add Bot
-					</button>
-				</div>
-			</div>
+			<p class="info-text">
+				Bot count is configured in playerbots.conf. Use the Config page to modify settings, then reload.
+			</p>
 
 			<div class="button-row">
-				<button class="btn btn-danger" onclick={handleRemoveAllBots}>
-					Remove All Bots
-				</button>
-				<button class="btn btn-secondary" onclick={handleReloadConfig}>
+				<button class="btn btn-secondary" on:click={handleReloadConfig}>
 					Reload Config
 				</button>
-				<button class="btn btn-secondary" onclick={loadBotsStatus}>
+				<button class="btn btn-secondary" on:click={loadBotsStatus}>
 					Refresh Status
 				</button>
 			</div>
@@ -372,15 +302,16 @@
 		<section class="card command-card">
 			<h2>GM Commands</h2>
 
-			<form class="command-form" onsubmit={(e) => { e.preventDefault(); handleSendCommand(); }}>
+			<div class="command-form">
 				<input
 					type="text"
 					bind:value={gmCommand}
+					on:keydown={handleKeydown}
 					placeholder="Enter GM command (e.g., .server info)"
 					class="command-input"
 				/>
-				<button type="submit" class="btn btn-primary">Send</button>
-			</form>
+				<button class="btn btn-primary" on:click={handleSendCommand}>Send</button>
+			</div>
 
 			<div class="command-history">
 				{#each commandHistory as entry}
@@ -399,7 +330,7 @@
 		<section class="card logs-card">
 			<h2>
 				Server Logs
-				<button class="btn btn-small btn-secondary" onclick={loadServerLogs}>
+				<button class="btn btn-small btn-secondary" on:click={loadServerLogs}>
 					Refresh
 				</button>
 			</h2>
@@ -573,35 +504,10 @@
 		font-size: 0.875rem;
 	}
 
-	.form-group {
-		margin-bottom: 1rem;
-	}
-
-	.form-group label {
-		display: block;
+	.info-text {
 		font-size: 0.875rem;
 		color: var(--text-muted);
-		margin-bottom: 0.5rem;
-	}
-
-	.input-row {
-		display: flex;
-		gap: 0.75rem;
-	}
-
-	input[type='text'],
-	input[type='number'] {
-		flex: 1;
-		padding: 0.625rem;
-		border-radius: 6px;
-		border: 1px solid var(--border);
-		background: var(--bg);
-		color: var(--text);
-	}
-
-	input[type='number'] {
-		width: 100px;
-		flex: none;
+		margin-bottom: 1rem;
 	}
 
 	.bots-status {
@@ -609,7 +515,7 @@
 		border-radius: 6px;
 		padding: 1rem;
 		margin-bottom: 1rem;
-		max-height: 120px;
+		max-height: 150px;
 		overflow-y: auto;
 	}
 
