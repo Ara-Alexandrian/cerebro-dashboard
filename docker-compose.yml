@@ -16,7 +16,7 @@ services:
       - AC_BIN_PATH=/mnt/nextorage/appdata/wotlk/server/bin
       - AC_ETC_PATH=/mnt/nextorage/appdata/wotlk/server/etc
     ports:
-      - "8080:8080"
+      - "8086:8080"
     volumes:
       - /mnt/nextorage/appdata/wotlk/server/etc:/mnt/nextorage/appdata/wotlk/server/etc:rw
     networks:
