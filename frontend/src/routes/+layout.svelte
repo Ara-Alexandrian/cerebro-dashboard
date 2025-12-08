@@ -1,5 +1,8 @@
 <script lang="ts">
 	import '../app.css';
+	import type { Snippet } from 'svelte';
+
+	let { children }: { children: Snippet } = $props();
 
 	const navItems = [
 		{ href: '/', label: 'Dashboard', icon: '◉' },
@@ -32,7 +35,7 @@
 		</div>
 	</aside>
 	<main class="content">
-		<slot />
+		{@render children()}
 	</main>
 </div>
 
