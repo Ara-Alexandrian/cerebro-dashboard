@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { getHealth, getVllmStatus } from '$lib/api';
 
-	let health: Awaited<ReturnType<typeof getHealth>> | null = $state(null);
-	let vllmStatus: Awaited<ReturnType<typeof getVllmStatus>> | null = $state(null);
-	let loading = $state(true);
+	let health: Awaited<ReturnType<typeof getHealth>> | null = null;
+	let vllmStatus: Awaited<ReturnType<typeof getVllmStatus>> | null = null;
+	let loading = true;
 
 	async function refresh() {
 		try {
@@ -16,7 +17,7 @@
 		}
 	}
 
-	$effect(() => {
+	onMount(() => {
 		if (!browser) return;
 
 		refresh().then(() => {
@@ -41,7 +42,7 @@
 <div class="monitor">
 	<header>
 		<h1>System Monitor</h1>
-		<button class="secondary" onclick={refresh}>Refresh</button>
+		<button class="secondary" on:click={refresh}>Refresh</button>
 	</header>
 
 	{#if loading}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import {
 		getAccounts,
@@ -18,40 +19,40 @@
 		type Character
 	} from '$lib/api';
 
-	let accounts: AccountWithMeta[] = $state([]);
-	let onlineAccounts: OnlineAccount[] = $state([]);
-	let stats = $state({ total: 0, online: 0, bots: 0, players: 0 });
-	let categories: string[] = $state(['friend', 'bot', 'admin', 'test', 'unknown']);
-	let loading = $state(true);
+	let accounts: AccountWithMeta[] = [];
+	let onlineAccounts: OnlineAccount[] = [];
+	let stats = { total: 0, online: 0, bots: 0, players: 0 };
+	let categories: string[] = ['friend', 'bot', 'admin', 'test', 'unknown'];
+	let loading = true;
 
 	// Filters
-	let searchQuery = $state('');
-	let filterCategory = $state('');
-	let showBots = $state(false);
-	let showCreateForm = $state(false);
+	let searchQuery = '';
+	let filterCategory = '';
+	let showBots = false;
+	let showCreateForm = false;
 
 	// Selection
-	let selectedAccount: AccountWithMeta | null = $state(null);
-	let selectedCharacters: Character[] = $state([]);
+	let selectedAccount: AccountWithMeta | null = null;
+	let selectedCharacters: Character[] = [];
 
 	// Create form
-	let newUsername = $state('');
-	let newPassword = $state('');
-	let newEmail = $state('');
-	let createError = $state('');
+	let newUsername = '';
+	let newPassword = '';
+	let newEmail = '';
+	let createError = '';
 
 	// Edit meta
-	let editingMeta = $state(false);
-	let editCategory = $state('');
-	let editNotes = $state('');
-	let editTags = $state('');
+	let editingMeta = false;
+	let editCategory = '';
+	let editNotes = '';
+	let editTags = '';
 
 	// GM Level and Password
-	let currentGmLevel = $state(0);
-	let showGmInfo = $state(false);
-	let changePasswordValue = $state('');
-	let passwordError = $state('');
-	let passwordSuccess = $state(false);
+	let currentGmLevel = 0;
+	let showGmInfo = false;
+	let changePasswordValue = '';
+	let passwordError = '';
+	let passwordSuccess = false;
 
 	const CLASS_NAMES: Record<number, string> = {
 		1: 'Warrior', 2: 'Paladin', 3: 'Hunter', 4: 'Rogue',
@@ -109,7 +110,7 @@
 		searchTimeout = setTimeout(loadAccounts, 300);
 	}
 
-	$effect(() => {
+	onMount(() => {
 		if (!browser) return;
 		refresh();
 		const interval = setInterval(() => {
@@ -254,7 +255,7 @@
 <div class="accounts-page">
 	<header>
 		<h1>Accounts</h1>
-		<button class="secondary" onclick={() => showCreateForm = !showCreateForm}>
+		<button class="secondary" on:click={() => showCreateForm = !showCreateForm}>
 			{showCreateForm ? 'Cancel' : '+ New Account'}
 		</button>
 	</header>
@@ -297,7 +298,7 @@
 				<div class="error">{createError}</div>
 			{/if}
 			<div class="form-actions">
-				<button class="primary" onclick={handleCreate}>Create Account</button>
+				<button class="primary" on:click={handleCreate}>Create Account</button>
 			</div>
 		</div>
 	{/if}
@@ -309,16 +310,16 @@
 				type="text"
 				placeholder="Search accounts..."
 				bind:value={searchQuery}
-				oninput={handleSearch}
+				on:input={handleSearch}
 			/>
-			<select bind:value={filterCategory} onchange={handleFilterChange}>
+			<select bind:value={filterCategory} on:change={handleFilterChange}>
 				<option value="">All Categories</option>
 				{#each categories as cat}
 					<option value={cat}>{cat}</option>
 				{/each}
 			</select>
 			<label class="toggle">
-				<input type="checkbox" bind:checked={showBots} onchange={handleFilterChange} />
+				<input type="checkbox" bind:checked={showBots} on:change={handleFilterChange} />
 				<span>Bots</span>
 			</label>
 		</div>
@@ -368,7 +369,7 @@
 							class="table-row"
 							class:selected={selectedAccount?.id === account.id}
 							class:online={account.online === 1}
-							onclick={() => selectAccount(account)}
+							on:click={() => selectAccount(account)}
 						>
 							<span class="username">{account.username}</span>
 							<span class="category">
@@ -425,8 +426,8 @@
 							<textarea bind:value={editNotes} rows="2"></textarea>
 						</label>
 						<div class="edit-actions">
-							<button class="secondary" onclick={() => editingMeta = false}>Cancel</button>
-							<button class="primary" onclick={saveMeta}>Save</button>
+							<button class="secondary" on:click={() => editingMeta = false}>Cancel</button>
+							<button class="primary" on:click={saveMeta}>Save</button>
 						</div>
 					</div>
 				{:else}
@@ -436,12 +437,12 @@
 								class="cat-btn"
 								class:active={selectedAccount.category === cat}
 								style="--cat-color: {CATEGORY_COLORS[cat]}"
-								onclick={() => selectedAccount && quickSetCategory(selectedAccount, cat)}
+								on:click={() => selectedAccount && quickSetCategory(selectedAccount, cat)}
 							>
 								{cat}
 							</button>
 						{/each}
-						<button class="edit-btn" onclick={startEditMeta}>Edit</button>
+						<button class="edit-btn" on:click={startEditMeta}>Edit</button>
 					</div>
 
 					{#if selectedAccount.tags?.length}
@@ -490,7 +491,7 @@
 				<div class="admin-section">
 					<h3>
 						GM Level
-						<button class="info-btn" onclick={() => showGmInfo = !showGmInfo} title="What do GM levels do?">?</button>
+						<button class="info-btn" on:click={() => showGmInfo = !showGmInfo} title="What do GM levels do?">?</button>
 					</h3>
 					{#if showGmInfo}
 						<div class="info-box">
@@ -505,7 +506,7 @@
 							<button
 								class="gm-btn"
 								class:active={currentGmLevel === level}
-								onclick={() => handleSetGmLevel(level)}
+								on:click={() => handleSetGmLevel(level)}
 							>
 								{level === 0 ? 'Player' : `GM ${level}`}
 							</button>
@@ -522,7 +523,7 @@
 							placeholder="New password..."
 							bind:value={changePasswordValue}
 						/>
-						<button class="primary" onclick={handleChangePassword}>Set</button>
+						<button class="primary" on:click={handleChangePassword}>Set</button>
 					</div>
 					{#if passwordError}
 						<div class="error-msg">{passwordError}</div>
