@@ -1,29 +1,38 @@
-<script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+<script>
 	import { browser } from '$app/environment';
 	import { getHealth, getStats, getPersonalities } from '$lib/api';
 
-	let health: Awaited<ReturnType<typeof getHealth>> | null = null;
-	let stats: Awaited<ReturnType<typeof getStats>> | null = null;
-	let personalities: Awaited<ReturnType<typeof getPersonalities>> | null = null;
-	let loading = true;
-	let refreshing = false;
-	let error = '';
-	let lastUpdated = '';
-	let interval: ReturnType<typeof setInterval>;
+	console.log('[Dashboard] Script loading, browser:', browser);
+
+	let health = $state(null);
+	let stats = $state(null);
+	let personalities = $state(null);
+	let loading = $state(true);
+	let refreshing = $state(false);
+	let error = $state('');
+	let lastUpdated = $state('');
+	let interval = $state(null);
+	let initialized = $state(false);
 
 	async function refresh(showLoading = false) {
+		console.log('[Dashboard] refresh() called');
 		if (showLoading) loading = true;
 		refreshing = true;
 		error = '';
 		try {
-			[health, stats, personalities] = await Promise.all([
+			console.log('[Dashboard] Fetching data...');
+			const [h, s, p] = await Promise.all([
 				getHealth(),
 				getStats(),
 				getPersonalities()
 			]);
+			health = h;
+			stats = s;
+			personalities = p;
+			console.log('[Dashboard] Data loaded:', { health, stats, personalities });
 			lastUpdated = new Date().toLocaleTimeString();
 		} catch (e) {
+			console.error('[Dashboard] Error:', e);
 			error = e instanceof Error ? e.message : 'Failed to load data';
 		} finally {
 			loading = false;
@@ -31,19 +40,24 @@
 		}
 	}
 
-	onMount(() => {
-		if (browser) {
+	// Use $effect for Svelte 5 - runs when component mounts in browser
+	$effect(() => {
+		if (browser && !initialized) {
+			console.log('[Dashboard] $effect initializing...');
+			initialized = true;
 			refresh(true);
-			// Auto-refresh every 30 seconds
 			interval = setInterval(() => refresh(false), 30000);
 		}
+
+		// Cleanup
+		return () => {
+			if (interval) {
+				clearInterval(interval);
+			}
+		};
 	});
 
-	onDestroy(() => {
-		if (interval) clearInterval(interval);
-	});
-
-	function getStatusClass(status: string | undefined) {
+	function getStatusClass(status) {
 		if (!status) return '';
 		if (status === 'healthy' || status === 'running') return 'healthy';
 		if (status === 'degraded') return 'degraded';

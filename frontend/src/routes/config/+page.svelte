@@ -1,26 +1,31 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { getConfigs, getConfig } from '$lib/api';
 
-	let configs: Array<{ name: string; path: string; size: number }> = [];
-	let selectedConfig: string | null = null;
-	let configContent = '';
-	let loading = true;
-	let saving = false;
+	let configs: Array<{ name: string; path: string; size: number }> = $state([]);
+	let selectedConfig: string | null = $state(null);
+	let configContent = $state('');
+	let loading = $state(true);
+	let saving = $state(false);
+	let initialized = $state(false);
 
-	onMount(async () => {
-		if (browser) {
-			try {
-				const data = await getConfigs();
-				configs = data.configs;
-			} catch (e) {
-				console.error('Failed to load configs:', e);
-			} finally {
-				loading = false;
-			}
+	$effect(() => {
+		if (browser && !initialized) {
+			initialized = true;
+			loadConfigs();
 		}
 	});
+
+	async function loadConfigs() {
+		try {
+			const data = await getConfigs();
+			configs = data.configs;
+		} catch (e) {
+			console.error('Failed to load configs:', e);
+		} finally {
+			loading = false;
+		}
+	}
 
 	async function loadConfig(name: string) {
 		selectedConfig = name;

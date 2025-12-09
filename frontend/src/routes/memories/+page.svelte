@@ -1,30 +1,35 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { getMemories, getPersonalities, searchMemories, type Memory, type Personality } from '$lib/api';
 
-	let memories: Memory[] = [];
-	let personalities: Personality[] = [];
-	let loading = true;
-	let searchQuery = '';
-	let filterBotId: number | null = null;
-	let filterType: string | null = null;
+	let memories: Memory[] = $state([]);
+	let personalities: Personality[] = $state([]);
+	let loading = $state(true);
+	let searchQuery = $state('');
+	let filterBotId: number | null = $state(null);
+	let filterType: string | null = $state(null);
+	let initialized = $state(false);
 
 	const memoryTypes = ['combat', 'social', 'exploration'];
 
-	onMount(async () => {
-		if (browser) {
-			try {
-				const [memData, botData] = await Promise.all([getMemories(), getPersonalities()]);
-				memories = memData.memories;
-				personalities = botData.personalities;
-			} catch (e) {
-				console.error('Failed to load memories:', e);
-			} finally {
-				loading = false;
-			}
+	$effect(() => {
+		if (browser && !initialized) {
+			initialized = true;
+			loadInitialData();
 		}
 	});
+
+	async function loadInitialData() {
+		try {
+			const [memData, botData] = await Promise.all([getMemories(), getPersonalities()]);
+			memories = memData.memories;
+			personalities = botData.personalities;
+		} catch (e) {
+			console.error('Failed to load memories:', e);
+		} finally {
+			loading = false;
+		}
+	}
 
 	async function refresh() {
 		loading = true;

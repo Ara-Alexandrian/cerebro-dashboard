@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { getHealth, getVllmStatus } from '$lib/api';
 
-	let health: Awaited<ReturnType<typeof getHealth>> | null = null;
-	let vllmStatus: Awaited<ReturnType<typeof getVllmStatus>> | null = null;
-	let loading = true;
+	let health: Awaited<ReturnType<typeof getHealth>> | null = $state(null);
+	let vllmStatus: Awaited<ReturnType<typeof getVllmStatus>> | null = $state(null);
+	let loading = $state(true);
+	let initialized = $state(false);
+	let interval: ReturnType<typeof setInterval> | null = $state(null);
 
 	async function refresh() {
 		try {
@@ -17,17 +18,16 @@
 		}
 	}
 
-	onMount(() => {
-		if (!browser) return;
-
-		refresh().then(() => {
-			loading = false;
-		});
-
-		const interval = setInterval(refresh, 5000);
-
+	$effect(() => {
+		if (browser && !initialized) {
+			initialized = true;
+			refresh().then(() => {
+				loading = false;
+			});
+			interval = setInterval(refresh, 5000);
+		}
 		return () => {
-			clearInterval(interval);
+			if (interval) clearInterval(interval);
 		};
 	});
 

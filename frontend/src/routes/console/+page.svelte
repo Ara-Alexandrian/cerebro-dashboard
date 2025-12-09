@@ -1,25 +1,30 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { getCommonCommands, sendGmCommand, testChat } from '$lib/api';
 
-	let commands: Array<{ cmd: string; desc: string }> = [];
-	let gmCommand = '';
-	let gmResult = '';
-	let chatMessage = '';
-	let chatHistory: Array<{ role: string; content: string }> = [];
-	let chatLoading = false;
+	let commands: Array<{ cmd: string; desc: string }> = $state([]);
+	let gmCommand = $state('');
+	let gmResult = $state('');
+	let chatMessage = $state('');
+	let chatHistory: Array<{ role: string; content: string }> = $state([]);
+	let chatLoading = $state(false);
+	let initialized = $state(false);
 
-	onMount(async () => {
-		if (browser) {
-			try {
-				const data = await getCommonCommands();
-				commands = data.commands;
-			} catch (e) {
-				console.error('Failed to load commands:', e);
-			}
+	$effect(() => {
+		if (browser && !initialized) {
+			initialized = true;
+			loadCommands();
 		}
 	});
+
+	async function loadCommands() {
+		try {
+			const data = await getCommonCommands();
+			commands = data.commands;
+		} catch (e) {
+			console.error('Failed to load commands:', e);
+		}
+	}
 
 	async function executeGmCommand() {
 		if (!gmCommand.trim()) return;

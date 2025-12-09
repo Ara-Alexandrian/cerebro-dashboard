@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import {
 		getServerStatus,
@@ -18,24 +17,26 @@
 		authserver: string;
 		soap: string;
 		host: string;
-	} | null = null;
-	let serverLogs = '';
-	let isLoading = false;
-	let statusMessage = '';
-	let statusType: 'success' | 'error' | '' = '';
+	} | null = $state(null);
+	let serverLogs = $state('');
+	let isLoading = $state(false);
+	let statusMessage = $state('');
+	let statusType: 'success' | 'error' | '' = $state('');
 
 	// Bot control state
-	let botsStatus = '';
+	let botsStatus = $state('');
 
 	// GM Command state
-	let gmCommand = '';
-	let commandHistory: Array<{ command: string; result: string; success: boolean }> = [];
+	let gmCommand = $state('');
+	let commandHistory: Array<{ command: string; result: string; success: boolean }> = $state([]);
 
 	// Refresh interval
-	let refreshInterval: ReturnType<typeof setInterval>;
+	let refreshInterval: ReturnType<typeof setInterval> | null = $state(null);
+	let initialized = $state(false);
 
-	onMount(() => {
-		if (browser) {
+	$effect(() => {
+		if (browser && !initialized) {
+			initialized = true;
 			loadServerStatus();
 			loadServerLogs();
 			loadBotsStatus();

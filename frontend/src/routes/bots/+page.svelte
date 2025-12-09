@@ -1,26 +1,27 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { getPersonalities, createPersonality, updatePersonality, deletePersonality, type Personality } from '$lib/api';
 
-	let personalities: Personality[] = [];
-	let loading = true;
-	let showForm = false;
-	let editingId: number | null = null;
+	let personalities: Personality[] = $state([]);
+	let loading = $state(true);
+	let showForm = $state(false);
+	let editingId: number | null = $state(null);
+	let initialized = $state(false);
 
 	// Form fields
-	let name = '';
-	let botClass = 'warrior';
-	let archetype = 'dps';
-	let systemPrompt = '';
-	let formError = '';
+	let name = $state('');
+	let botClass = $state('warrior');
+	let archetype = $state('dps');
+	let systemPrompt = $state('');
+	let formError = $state('');
 
 	const classes = ['warrior', 'paladin', 'hunter', 'rogue', 'priest', 'shaman', 'mage', 'warlock', 'druid', 'death_knight'];
 	const archetypes = ['tank', 'healer', 'dps'];
 
-	onMount(async () => {
-		if (browser) {
-			await refresh();
+	$effect(() => {
+		if (browser && !initialized) {
+			initialized = true;
+			refresh();
 		}
 	});
 

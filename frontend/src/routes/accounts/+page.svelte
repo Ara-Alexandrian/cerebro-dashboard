@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import {
 		getAccounts,
@@ -19,40 +18,42 @@
 		type Character
 	} from '$lib/api';
 
-	let accounts: AccountWithMeta[] = [];
-	let onlineAccounts: OnlineAccount[] = [];
-	let stats = { total: 0, online: 0, bots: 0, players: 0 };
-	let categories: string[] = ['friend', 'bot', 'admin', 'test', 'unknown'];
-	let loading = true;
+	let accounts: AccountWithMeta[] = $state([]);
+	let onlineAccounts: OnlineAccount[] = $state([]);
+	let stats = $state({ total: 0, online: 0, bots: 0, players: 0 });
+	let categories: string[] = $state(['friend', 'bot', 'admin', 'test', 'unknown']);
+	let loading = $state(true);
+	let initialized = $state(false);
+	let refreshInterval: ReturnType<typeof setInterval> | null = $state(null);
 
 	// Filters
-	let searchQuery = '';
-	let filterCategory = '';
-	let showBots = false;
-	let showCreateForm = false;
+	let searchQuery = $state('');
+	let filterCategory = $state('');
+	let showBots = $state(false);
+	let showCreateForm = $state(false);
 
 	// Selection
-	let selectedAccount: AccountWithMeta | null = null;
-	let selectedCharacters: Character[] = [];
+	let selectedAccount: AccountWithMeta | null = $state(null);
+	let selectedCharacters: Character[] = $state([]);
 
 	// Create form
-	let newUsername = '';
-	let newPassword = '';
-	let newEmail = '';
-	let createError = '';
+	let newUsername = $state('');
+	let newPassword = $state('');
+	let newEmail = $state('');
+	let createError = $state('');
 
 	// Edit meta
-	let editingMeta = false;
-	let editCategory = '';
-	let editNotes = '';
-	let editTags = '';
+	let editingMeta = $state(false);
+	let editCategory = $state('');
+	let editNotes = $state('');
+	let editTags = $state('');
 
 	// GM Level and Password
-	let currentGmLevel = 0;
-	let showGmInfo = false;
-	let changePasswordValue = '';
-	let passwordError = '';
-	let passwordSuccess = false;
+	let currentGmLevel = $state(0);
+	let showGmInfo = $state(false);
+	let changePasswordValue = $state('');
+	let passwordError = $state('');
+	let passwordSuccess = $state(false);
 
 	const CLASS_NAMES: Record<number, string> = {
 		1: 'Warrior', 2: 'Paladin', 3: 'Hunter', 4: 'Rogue',
@@ -110,14 +111,18 @@
 		searchTimeout = setTimeout(loadAccounts, 300);
 	}
 
-	onMount(() => {
-		if (!browser) return;
-		refresh();
-		const interval = setInterval(() => {
-			getOnlineAccounts().then(d => onlineAccounts = d.online);
-			getAccountStats().then(d => stats = d);
-		}, 10000);
-		return () => clearInterval(interval);
+	$effect(() => {
+		if (browser && !initialized) {
+			initialized = true;
+			refresh();
+			refreshInterval = setInterval(() => {
+				getOnlineAccounts().then(d => onlineAccounts = d.online);
+				getAccountStats().then(d => stats = d);
+			}, 10000);
+		}
+		return () => {
+			if (refreshInterval) clearInterval(refreshInterval);
+		};
 	});
 
 	async function handleFilterChange() {

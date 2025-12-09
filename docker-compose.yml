@@ -5,7 +5,7 @@ services:
     build: ./backend
     container_name: cerebro-backend
     environment:
-      - POSTGRES_HOST=172.21.0.2
+      - POSTGRES_HOST=azerothcore-pgvector
       - POSTGRES_PORT=5432
       - POSTGRES_USER=azeroth
       - POSTGRES_PASSWORD=azeroth
@@ -16,10 +16,10 @@ services:
       - AC_BIN_PATH=/mnt/nextorage/appdata/wotlk/server/bin
       - AC_ETC_PATH=/mnt/nextorage/appdata/wotlk/server/etc
       # AzerothCore server connection
-      - AC_SERVER_HOST=172.21.0.4
+      - AC_SERVER_HOST=azerothcore-server
       - AC_WORLD_PORT=8085
       - AC_AUTH_PORT=3724
-      - AC_SOAP_HOST=172.21.0.4
+      - AC_SOAP_HOST=azerothcore-server
       - AC_SOAP_PORT=7878
       - AC_SOAP_USER=scaldor
       - AC_SOAP_PASS=321$

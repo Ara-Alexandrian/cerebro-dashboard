@@ -67,7 +67,7 @@ up() {
         --name "$BACKEND_CONTAINER" \
         --network "$NETWORK" \
         -p 8086:8080 \
-        -e POSTGRES_HOST=172.21.0.2 \
+        -e POSTGRES_HOST=azerothcore-pgvector \
         -e POSTGRES_PORT=5432 \
         -e POSTGRES_USER=azeroth \
         -e POSTGRES_PASSWORD=azeroth \
@@ -77,10 +77,10 @@ up() {
         -e VLLM_URL=http://172.21.0.3:8000 \
         -e AC_BIN_PATH=/mnt/nextorage/appdata/wotlk/server/bin \
         -e AC_ETC_PATH=/mnt/nextorage/appdata/wotlk/server/etc \
-        -e AC_SERVER_HOST=172.21.0.4 \
+        -e AC_SERVER_HOST=azerothcore-server \
         -e AC_WORLD_PORT=8085 \
         -e AC_AUTH_PORT=3724 \
-        -e AC_SOAP_HOST=172.21.0.4 \
+        -e AC_SOAP_HOST=azerothcore-server \
         -e AC_SOAP_PORT=7878 \
         -e AC_SOAP_USER=scaldor \
         -e "AC_SOAP_PASS=321\$" \
